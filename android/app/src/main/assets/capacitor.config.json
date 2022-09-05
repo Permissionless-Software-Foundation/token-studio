@@ -1,0 +1,6 @@
+{
+	"appId": "com.bch-wallet.app",
+	"appName": "bch-wallet-web3",
+	"webDir": "build",
+	"bundledWebRuntime": false
+}

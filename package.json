@@ -1,5 +1,5 @@
 {
-  "name": "bch-wallet-web3-android",
+  "name": "token-studio",
   "version": "1.0.0",
   "dependencies": {
     "@chris.troutner/react-jdenticon": "1.0.0",

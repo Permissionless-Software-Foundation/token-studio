@@ -15,6 +15,7 @@ import BchSend from '../bch-send'
 import SlpTokens from '../slp-tokens'
 import ServerSelectView from '../servers/select-server-view'
 import Sweep from '../sweep'
+import CreateToken from '../create-token'
 
 // let _this
 
@@ -28,8 +29,8 @@ class AppBody extends React.Component {
       appData: props.appData,
       bchWallet: props.appData.bchWallet,
       bchWalletState: props.appData.bchWalletState,
-      delMnemonic: props.appData.delMnemonic,
-      setMnemonic: props.appData.setMnemonic
+      delLSState: props.appData.delLSState,
+      setLSState: props.appData.setLSState
     }
 
     // This function is passed from the parent component. It's used to update
@@ -58,8 +59,10 @@ class AppBody extends React.Component {
       case 1:
         return (<SlpTokens appData={this.state.appData} />)
       case 2:
-        return (<Sweep appData={this.state.appData} />)
+        return (<CreateToken appData={this.state.appData} />)
       case 3:
+        return (<Sweep appData={this.state.appData} />)
+      case 4:
         return (
           <BchWallet
             appData={this.state.appData}

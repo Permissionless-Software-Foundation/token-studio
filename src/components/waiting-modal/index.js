@@ -16,6 +16,7 @@ function ModalTemplate (props) {
 
     if (props.closeFunc) {
       props.closeFunc()
+      setShow(true)
     }
   }
 

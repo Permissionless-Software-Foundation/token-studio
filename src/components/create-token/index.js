@@ -230,17 +230,17 @@ class CreateToken extends React.Component {
     try {
       console.log('Starting NFT creation.')
 
-      // Validate input
-      this.validateInputs()
-
       // Initialize modal
       const dialogText = []
-      let statusStr = ''
+      let statusStr = 'Starting NFT creation.'
       this.setState({
         hideModal: false,
         hideSpinner: false,
         modalBody: dialogText
       })
+
+      // Validate input
+      this.validateInputs()
 
       statusStr = 'Updating UTXOs'
       console.log(statusStr)
@@ -283,13 +283,17 @@ class CreateToken extends React.Component {
 
       // Refresh the utxos in the wallet.
       // Also wait for P2WDB to process entry.
-      await bchWallet.bchjs.Util.sleep(5000)
+      await bchWallet.bchjs.Util.sleep(6000)
       await bchWallet.initialize()
 
       statusStr = 'Pinning immutable data to IPFS'
       console.log(statusStr)
       dialogText.push(statusStr)
       this.setState({ modalBody: dialogText })
+
+      // TODO: Do continual retry of Read() P2WDB until the zcid returns a value,
+      // to protect against race condition error of trying to write zcid JSON
+      // that has not yet been processed.
 
       // Ask the P2WDB to upload the JSON content to IPFS.
       const pin = new Pin({ bchWallet, serverURL })
@@ -320,8 +324,12 @@ class CreateToken extends React.Component {
       this.setState({ modalBody: dialogText })
 
       // Refresh the utxos in the wallet. Also wait for P2WDB to process entry.
-      await bchWallet.bchjs.Util.sleep(5000)
+      await bchWallet.bchjs.Util.sleep(6000)
       await bchWallet.initialize()
+
+      // TODO: Do continual retry of Read() P2WDB until the zcid returns a value,
+      // to protect against race condition error of trying to write zcid JSON
+      // that has not yet been processed.
 
       // Ask the P2WDB to upload the JSON content to IPFS.
       // const pin = new Pin({ bchWallet, serverURL })

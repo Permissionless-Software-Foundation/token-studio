@@ -258,7 +258,8 @@ class CreateToken extends React.Component {
 
       // Prepare to write data to the P2WDB
       const wif = bchWallet.walletInfo.privateKey
-      const serverURL = 'http://localhost:5010'
+      // const serverURL = 'http://localhost:5010'
+      const serverURL = 'https://p2wdb.fullstackcash.nl'
       const write = new Write({ bchWallet, serverURL })
 
       const now = new Date()
@@ -281,7 +282,8 @@ class CreateToken extends React.Component {
       this.setState({ modalBody: dialogText })
 
       // Refresh the utxos in the wallet.
-      await bchWallet.bchjs.Util.sleep(2000)
+      // Also wait for P2WDB to process entry.
+      await bchWallet.bchjs.Util.sleep(5000)
       await bchWallet.initialize()
 
       statusStr = 'Pinning immutable data to IPFS'
@@ -312,19 +314,19 @@ class CreateToken extends React.Component {
       const zcid1 = result1.hash
       console.log('zcid1: ', zcid1)
 
-      // Ask the P2WDB to upload the JSON content to IPFS.
-      // const pin = new Pin({ bchWallet, serverURL })
-      const cid1 = await pin.json(zcid1)
-      console.log('msp CID: ', cid1)
-
       statusStr = 'Updating UTXOs'
       console.log(statusStr)
       dialogText.push(statusStr)
       this.setState({ modalBody: dialogText })
 
-      // Refresh the utxos in the wallet.
-      await bchWallet.bchjs.Util.sleep(2000)
+      // Refresh the utxos in the wallet. Also wait for P2WDB to process entry.
+      await bchWallet.bchjs.Util.sleep(5000)
       await bchWallet.initialize()
+
+      // Ask the P2WDB to upload the JSON content to IPFS.
+      // const pin = new Pin({ bchWallet, serverURL })
+      const cid1 = await pin.json(zcid1)
+      console.log('msp CID: ', cid1)
 
       statusStr = 'Pinning mutable data to IPFS'
       console.log(statusStr)

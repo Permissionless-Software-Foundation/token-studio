@@ -449,6 +449,8 @@ class CreateToken extends React.Component {
   onCloseModal () {
     const shouldRefreshTokens = this.state.shouldRefreshTokens
 
+    this.setState({ hideModal: true })
+
     if (shouldRefreshTokens) {
       this.refreshTokens()
     }

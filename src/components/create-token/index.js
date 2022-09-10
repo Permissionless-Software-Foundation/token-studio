@@ -9,6 +9,9 @@ import Accordion from 'react-bootstrap/Accordion'
 import { Pin, Write } from 'p2wdb/index.js'
 import { SlpMutableData } from 'slp-mutable-data'
 
+// Local libraries
+import RefreshTokenBalance from '../slp-tokens/refresh-tokens.js'
+
 class CreateToken extends React.Component {
   constructor (props) {
     super(props)
@@ -25,11 +28,14 @@ class CreateToken extends React.Component {
       fullSizedUrl: '',
       xtraImmutable: '',
       xtraMutable: ''
-
     }
 
     // Bind the 'this' object to the event handlers.
     this.handleCreateToken = this.handleCreateToken.bind(this)
+    this.refreshTokens = this.refreshTokens.bind(this)
+
+    // Create a reference to the Refresh button.
+    this.refreshTokenButtonRef = React.createRef()
   }
 
   render () {
@@ -91,6 +97,11 @@ class CreateToken extends React.Component {
                     value={this.state.tokenIcon}
                   />
                 </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <i>Token icons should be 512 pixels wide.</i>
               </Col>
             </Row>
             <br />
@@ -193,6 +204,8 @@ class CreateToken extends React.Component {
             </Col>
           </Row>
         </Container>
+
+        <RefreshTokenBalance appData={this.state.appData} hideButton ref={this.refreshTokenButtonRef} />
       </>
     )
   }
@@ -328,7 +341,8 @@ class CreateToken extends React.Component {
       xtraMutable: ''
     })
 
-    // ToDo: Refresh the token balance.
+    // Refresh the token balance.
+    this.refreshTokens()
   }
 
   // Cycles through HD wallet to find a key pair that does not have a
@@ -390,6 +404,21 @@ class CreateToken extends React.Component {
     } catch (error) {
       console.warn(error)
       throw error
+    }
+  }
+
+  // This function is triggered when the token balance needs to be refreshed
+  // from the blockchain.
+  // This needs to happen after create a new token, to reflect the changed
+  // token balance within the wallet app.
+  // This function triggers the on-click function within the refresh-tokens.js button.
+  async refreshTokens () {
+    try {
+      const appData = await this.refreshTokenButtonRef.current.handleRefreshBalance()
+
+      this.setState({ appData })
+    } catch (err) {
+    /* exit quietly */
     }
   }
 }

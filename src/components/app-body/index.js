@@ -26,11 +26,7 @@ class AppBody extends React.Component {
     this.state = {
       activeView: 0,
       menuState: props.menuState,
-      appData: props.appData,
-      bchWallet: props.appData.bchWallet,
-      bchWalletState: props.appData.bchWalletState,
-      delLSState: props.appData.delLSState,
-      setLSState: props.appData.setLSState
+      appData: props.appData
     }
 
     // This function is passed from the parent component. It's used to update
@@ -55,11 +51,11 @@ class AppBody extends React.Component {
 
     switch (menuState) {
       case 0:
-        return (<BchSend appData={this.state.appData} />)
-      case 1:
-        return (<SlpTokens appData={this.state.appData} />)
-      case 2:
         return (<CreateToken appData={this.state.appData} />)
+      case 1:
+        return (<BchSend appData={this.state.appData} />)
+      case 2:
+        return (<SlpTokens appData={this.state.appData} />)
       case 3:
         return (<Sweep appData={this.state.appData} />)
       case 4:
@@ -73,7 +69,7 @@ class AppBody extends React.Component {
       case 100:
         return (<ServerSelectView appData={this.state.appData} />)
       default:
-        return (<BchSend appData={this.state.appData} />)
+        return (<CreateToken appData={this.state.appData} />)
     }
   }
 }

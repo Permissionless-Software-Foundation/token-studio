@@ -23,7 +23,8 @@ class RefreshTokenBalance extends React.Component {
       shouldTokensBeRefreshed: props.shouldTokensBeRefreshed,
       modalBody: [],
       hideSpinner: false,
-      hideWaitingModal: true
+      hideWaitingModal: true,
+      hideButton: props.hideButton || false
     }
 
     // Function handle for downloading token icons. Passed from parent component.
@@ -34,9 +35,12 @@ class RefreshTokenBalance extends React.Component {
   }
 
   render () {
+    let buttonVis = 'show'
+    if (this.state.hideButton) buttonVis = 'hidden'
+
     return (
       <>
-        <Button variant='success' onClick={this.handleRefreshBalance}>
+        <Button variant='success' onClick={this.handleRefreshBalance} style={{ visibility: buttonVis }}>
           <FontAwesomeIcon icon={faRedo} size='lg' /> Refresh
         </Button>
 
@@ -62,6 +66,7 @@ class RefreshTokenBalance extends React.Component {
       const wallet = this.state.appData.bchWallet
 
       // Update the wallet UTXOs
+      await wallet.initialize()
       const tokenList = await wallet.listTokens()
       // console.log(`tokenList: ${JSON.stringify(tokenList, null, 2)}`)
 

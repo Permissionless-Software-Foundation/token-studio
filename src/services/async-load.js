@@ -13,6 +13,7 @@ class AsyncLoad {
   constructor () {
     this.BchWallet = false
     this.Sweep = false
+    this.SlpMutableData = false
   }
 
   // Load the minimal-slp-wallet which comes in as a <script> file and is
@@ -30,6 +31,22 @@ class AsyncLoad {
       await sleep(1000)
     } while (!this.BchWallet)
   }
+
+  // Load the slp-mutable-data lib which comes in as a <script> file and is
+  // attached to the global 'window' object.
+  // async loadSlpMutableDataLib () {
+  //   do {
+  //     if (typeof window !== 'undefined' && window.SlpMutableData) {
+  //       this.SlpMutableData = window.SlpMutableData
+  //
+  //       return this.SlpMutableData
+  //     } else {
+  //       console.log('Waiting for slp-mutable-data library to load...')
+  //     }
+  //
+  //     await sleep(1000)
+  //   } while (!this.SlpMutableData)
+  // }
 
   // Initialize the BCH wallet
   async initWallet (restURL, mnemonic, setLSState, updateBchWalletState) {
@@ -55,10 +72,13 @@ class AsyncLoad {
     // Update the state of the wallet.
     updateBchWalletState(wallet.walletInfo)
 
-    // Save the mnemonic to local storage.
+    // Save the mnemonic to local storage if this is a new wallet.
     if (!mnemonic) {
       const newMnemonic = wallet.walletInfo.mnemonic
-      setLSState({ mnemonic: newMnemonic })
+      setLSState({
+        mnemonic: newMnemonic,
+        nextAddress: 1 // Initialize HD index
+      })
     }
 
     this.wallet = wallet

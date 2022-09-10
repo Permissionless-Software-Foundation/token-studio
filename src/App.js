@@ -70,8 +70,9 @@ class App extends React.Component {
         bchUsdPrice: 150
       },
 
-      // Will be replaced by Sweep library class once the library loads.
+      // Will be replaced by library class once it loads.
       Sweep: null
+      // SlpMutableData: null
     }
 
     this.cnt = 0
@@ -90,8 +91,12 @@ class App extends React.Component {
 
   async componentDidMount () {
     try {
-      this.addToModal('Loading minimal-slp-wallet')
+      this.addToModal('Loading minimal-slp-wallet library')
       await this.asyncLoad.loadWalletLib()
+
+      // this.addToModal('Loading slp-mutable-data library')
+      // const SlpMutableData = await this.asyncLoad.loadSlpMutableDataLib()
+      // this.setState({ SlpMutableData })
 
       // Update the list of potential back end servers.
       this.addToModal('Getting alternative servers')
@@ -152,6 +157,7 @@ class App extends React.Component {
       // Wallet and wallet state
       bchWallet: this.state.bchWallet,
       bchWalletState: this.state.bchWalletState,
+      lsState: this.lsState,
 
       // Functions
       updateBchWalletState: this.updateBchWalletState,
@@ -160,7 +166,9 @@ class App extends React.Component {
 
       servers: this.state.servers, // Alternative back end servers
 
-      Sweep: this.state.Sweep, // Sweep library
+      // Additional libraries
+      Sweep: this.state.Sweep,
+      // SlpMutableData: this.state.SlpMutableData,
 
       wallet: this.state.bchWallet
     }
@@ -214,7 +222,7 @@ class App extends React.Component {
     })
   }
 
-  // This function is used to retrieve the mnemonic from local storage, which
+  // This function is used to retrieve the mnemonic from LocalStorage, which
   // is handled by a child component (load-localstorage.js)
   passMnemonic (lsState, setLSState, delLSState) {
     // console.log(`mnemonic loaded from local storage: ${mnemonic}`)

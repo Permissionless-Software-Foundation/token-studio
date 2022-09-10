@@ -6,6 +6,7 @@
 import React from 'react'
 import { Container, Row, Col, Form, Button } from 'react-bootstrap'
 import { Pin, Write } from 'p2wdb/index.js'
+import { SlpMutableData } from 'slp-mutable-data'
 
 class CreateToken extends React.Component {
   constructor (props) {
@@ -170,46 +171,151 @@ class CreateToken extends React.Component {
     // Reinitilize the wallet UTXOs.
     const bchWallet = this.state.appData.bchWallet
     await bchWallet.initialize()
+    console.log('Updating UTXOs')
 
     // Prepare to write data to the P2WDB
     const wif = bchWallet.walletInfo.privateKey
     const serverURL = 'http://localhost:5010'
     const write = new Write({ bchWallet, serverURL })
 
-    // Upload the MSP JSON to IPFS.
-    const mspData = {
-      tokenIcon: "https://bafybeicvlcwv3flrwa4egmroyicvghevi6uzbd56drmoerjeguu4ikpnhe.ipfs.dweb.link/psf-logo.png",
-      about: "Demo token using this npm library: https://www.npmjs.com/package/slp-mutable-data"
+    // Upload immutable data to the P2WDB
+    const immutableData = {
+      issuer: 'Permissionless Software Foundation',
+      website: 'http://psfoundation.cash',
+      dateCreated: '2022-09-10'
     }
     const appId = 'token-data-001'
+    const result3 = await write.postEntry(immutableData, appId)
+    const zcid3 = result3.hash
+    console.log('zcid3: ', zcid3)
+
+    // Refresh the utxos in the wallet.
+    await bchWallet.bchjs.Util.sleep(2000)
+    await bchWallet.initialize()
+    console.log('Updating UTXOs')
+
+    // Ask the P2WDB to upload the JSON content to IPFS.
+    const pin = new Pin({ bchWallet, serverURL })
+    const cid3 = await pin.json(zcid3)
+    const cid3Str = `ipfs://${cid3}`
+    console.log('documentUrl: ', cid3Str)
+
+    // Upload the MSP JSON to IPFS.
+    const mspData = {
+      tokenIcon: 'https://bafybeicvlcwv3flrwa4egmroyicvghevi6uzbd56drmoerjeguu4ikpnhe.ipfs.dweb.link/psf-logo.png',
+      about: 'Demo token using this npm library: https://www.npmjs.com/package/slp-mutable-data'
+    }
+    // const appId = 'token-data-001'
     const result1 = await write.postEntry(mspData, appId)
     const zcid1 = result1.hash
     console.log('zcid1: ', zcid1)
 
     // Ask the P2WDB to upload the JSON content to IPFS.
-    const pin = new Pin({ bchWallet, serverURL })
+    // const pin = new Pin({ bchWallet, serverURL })
     const cid1 = await pin.json(zcid1)
     console.log('msp CID: ', cid1)
 
     // Refresh the utxos in the wallet.
     await bchWallet.bchjs.Util.sleep(2000)
     await bchWallet.initialize()
+    console.log('Updating UTXOs')
 
-    // Pay the P2WDB to the CID.
+    // Pay the P2WDB to pin the CID.
     const result2 = await pin.cid(cid1)
     console.log('result2: ', result2)
     const zcid2 = result2.hash
     console.log('zcid2: ', zcid2)
     // cid1 is the MSP IPFS CID that should be used.
 
-    /*
-      ToDo:
-       - p2wdb Write needs to return the same data structure weather it's paid
-       in BCH or in PSF tokens.
-       - This web app needs a way to generate a new key pair and save the index
-       to LocalStorage.
-       - The slp-mutable-data library can be used to generate a new token.
-    */
+    // Generate a new address to use for the mutable data address (MDA).
+    const keyPair = await this.getKeyPair()
+    console.log(`keyPair: ${JSON.stringify(keyPair, null, 2)}`)
+
+    // Refresh the utxos in the wallet.
+    await bchWallet.bchjs.Util.sleep(2000)
+    await bchWallet.initialize()
+    console.log('Updating UTXOs')
+
+    // Send a few sats to the MDA to pay for updates.
+    const receivers = [{
+      address: keyPair.cashAddress,
+      amountSat: 10000
+    }]
+    const mdaChargeTxid = await bchWallet.send(receivers)
+    console.log(`Sent 10,000 sats to MDA address. TXID: ${mdaChargeTxid}`)
+
+    // Refresh the utxos in the wallet.
+    await bchWallet.bchjs.Util.sleep(2000)
+    await bchWallet.initialize()
+    console.log('Updating UTXOs')
+
+    // Write mutable data to the MDA
+    const slpMutableData = new SlpMutableData({ wallet: bchWallet })
+    const cidStr = `ipfs://${cid1}`
+    console.log(`cidStr: ${cidStr}`)
+    const hex = await slpMutableData.data.writeCIDToOpReturn(cidStr, keyPair.wif)
+    const mdaWriteTxid = await bchWallet.ar.sendTx(hex)
+    console.log(`CID written to MDA. TXID: ${mdaWriteTxid}`)
+
+    // Collect token data that will be used to generate the token
+    const tokenData = {
+      name: this.state.tokenName,
+      ticker: this.state.tokenTicker,
+      documentUrl: cid3Str,
+      decimals: 0,
+      initialQty: 1,
+      mintBatonVout: null
+    }
+
+    // Generate the token
+    const genesisTxid = await slpMutableData.create.createToken(
+      wif,
+      tokenData,
+      keyPair.cashAddress
+    )
+    console.log(`New token created with TXID: ${genesisTxid}`)
+  }
+
+  // Cycles through HD wallet to find a key pair that does not have a
+  // transaction history.
+  async getKeyPair () {
+    try {
+      // Get the next address from LocalStorage
+      let nextAddress = this.state.appData.lsState.nextAddress
+
+      // If nextAddress value isn't available, initilize it to 1.
+      if (!nextAddress) nextAddress = 1
+      console.log('nextAddress: ', nextAddress)
+
+      let keyPair = {}
+      let txHistory = ['a', 'b', 'c']
+
+      console.log('Looking for keypair with no tx history...')
+
+      // Search for a keypair that has no transaction history.
+      do {
+        console.log(`Trying HD index ${nextAddress}`)
+
+        // Get a key pair from the wallet library.
+        keyPair = await this.state.appData.wallet.getKeyPair(nextAddress)
+        // console.log('keyPair: ', keyPair)
+
+        // Get transaction history for this address.
+        txHistory = await this.state.appData.wallet.getTransactions(keyPair.cashAddress)
+        if (!txHistory) txHistory = []
+        // console.log('txHistory: ', txHistory)
+
+        nextAddress++
+      } while (txHistory.length > 0)
+
+      // Save the current index to LocalStorage
+      await this.state.appData.setLSState({ nextAddress })
+      this.state.appData.lsState.nextAddress = nextAddress
+
+      return keyPair
+    } catch (err) {
+      console.error('Error in getKeyPair(): ', err)
+    }
   }
 
   // Verify that the required inputs have been filled out.

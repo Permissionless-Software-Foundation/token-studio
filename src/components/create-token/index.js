@@ -11,6 +11,7 @@ import { SlpMutableData } from 'slp-mutable-data'
 
 // Local libraries
 import RefreshTokenBalance from '../slp-tokens/refresh-tokens.js'
+import WaitingModal from '../waiting-modal'
 
 class CreateToken extends React.Component {
   constructor (props) {
@@ -27,12 +28,19 @@ class CreateToken extends React.Component {
       tokenMetadata: '',
       fullSizedUrl: '',
       xtraImmutable: '',
-      xtraMutable: ''
+      xtraMutable: '',
+
+      // Waiting Dialog Modal
+      hideModal: true, // Should the modal be visible?
+      modalBody: [], // Strings displayed in the modal
+      hideSpinner: false, // Spinner gif in modal
+      shouldRefreshTokens: false // Should the token balance be updated when the modal is closed?
     }
 
     // Bind the 'this' object to the event handlers.
     this.handleCreateToken = this.handleCreateToken.bind(this)
     this.refreshTokens = this.refreshTokens.bind(this)
+    this.onCloseModal = this.onCloseModal.bind(this)
 
     // Create a reference to the Refresh button.
     this.refreshTokenButtonRef = React.createRef()
@@ -206,143 +214,234 @@ class CreateToken extends React.Component {
         </Container>
 
         <RefreshTokenBalance appData={this.state.appData} hideButton ref={this.refreshTokenButtonRef} />
+
+        {
+          this.state.hideModal
+            ? null
+            : <WaitingModal heading='Creating NFT' body={this.state.modalBody} hideSpinner={this.state.hideSpinner} closeFunc={this.onCloseModal} />
+        }
+
       </>
     )
   }
 
   // This function is called when the user clicks the 'Create Token' button.
   async handleCreateToken (event) {
-    console.log('hello world')
+    try {
+      console.log('Starting NFT creation.')
 
-    // Validate input
-    this.validateInputs()
+      // Validate input
+      this.validateInputs()
 
-    // Reinitilize the wallet UTXOs.
-    const bchWallet = this.state.appData.bchWallet
-    await bchWallet.initialize()
-    console.log('Updating UTXOs')
+      // Initialize modal
+      const dialogText = []
+      let statusStr = ''
+      this.setState({
+        hideModal: false,
+        hideSpinner: false,
+        modalBody: dialogText
+      })
 
-    // Prepare to write data to the P2WDB
-    const wif = bchWallet.walletInfo.privateKey
-    const serverURL = 'http://localhost:5010'
-    const write = new Write({ bchWallet, serverURL })
+      statusStr = 'Updating UTXOs'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
 
-    const now = new Date()
+      // Reinitilize the wallet UTXOs.
+      const bchWallet = this.state.appData.bchWallet
+      await bchWallet.initialize()
 
-    // Upload immutable data to the P2WDB
-    const immutableData = {
-      issuer: 'http://psfoundation.cash',
-      website: 'https://nft-creator.fullstack.cash',
-      dateCreated: now.toLocaleString(),
-      userData: this.state.xtraImmutable
+      statusStr = 'Uploading immutable data to the P2WDB'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
+
+      // Prepare to write data to the P2WDB
+      const wif = bchWallet.walletInfo.privateKey
+      const serverURL = 'http://localhost:5010'
+      const write = new Write({ bchWallet, serverURL })
+
+      const now = new Date()
+
+      // Upload immutable data to the P2WDB
+      const immutableData = {
+        issuer: 'http://psfoundation.cash',
+        website: 'https://nft-creator.fullstack.cash',
+        dateCreated: now.toLocaleString(),
+        userData: this.state.xtraImmutable
+      }
+      const appId = 'token-data-001'
+      const result3 = await write.postEntry(immutableData, appId)
+      const zcid3 = result3.hash
+      console.log('zcid3: ', zcid3)
+
+      statusStr = 'Updating UTXOs'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
+
+      // Refresh the utxos in the wallet.
+      await bchWallet.bchjs.Util.sleep(2000)
+      await bchWallet.initialize()
+
+      statusStr = 'Pinning immutable data to IPFS'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
+
+      // Ask the P2WDB to upload the JSON content to IPFS.
+      const pin = new Pin({ bchWallet, serverURL })
+      const cid3 = await pin.json(zcid3)
+      const cid3Str = `ipfs://${cid3}`
+      console.log('documentUrl: ', cid3Str)
+
+      statusStr = 'Uploading mutable data to the P2WDB'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
+
+      // Upload the MSP JSON to IPFS.
+      const mspData = {
+        tokenIcon: this.state.tokenIcon,
+        fullSizedUrl: this.state.fullSizedUrl,
+        about: 'This NFT was created using the PSF Token Studio at https://nft-creator.fullstack.cash',
+        userData: this.state.xtraMutable
+      }
+      // const appId = 'token-data-001'
+      const result1 = await write.postEntry(mspData, appId)
+      const zcid1 = result1.hash
+      console.log('zcid1: ', zcid1)
+
+      // Ask the P2WDB to upload the JSON content to IPFS.
+      // const pin = new Pin({ bchWallet, serverURL })
+      const cid1 = await pin.json(zcid1)
+      console.log('msp CID: ', cid1)
+
+      statusStr = 'Updating UTXOs'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
+
+      // Refresh the utxos in the wallet.
+      await bchWallet.bchjs.Util.sleep(2000)
+      await bchWallet.initialize()
+
+      statusStr = 'Pinning mutable data to IPFS'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
+
+      // Pay the P2WDB to pin the CID.
+      const result2 = await pin.cid(cid1)
+      console.log('result2: ', result2)
+      const zcid2 = result2.hash
+      console.log('zcid2: ', zcid2)
+      // cid1 is the MSP IPFS CID that should be used.
+
+      // Generate a new address to use for the mutable data address (MDA).
+      const keyPair = await this.getKeyPair()
+      console.log(`keyPair: ${JSON.stringify(keyPair, null, 2)}`)
+
+      statusStr = 'Updating UTXOs'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
+
+      // Refresh the utxos in the wallet.
+      await bchWallet.bchjs.Util.sleep(2000)
+      await bchWallet.initialize()
+
+      statusStr = 'Funding Mutable Data Address (MDA)'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
+
+      // Send a few sats to the MDA to pay for updates.
+      const receivers = [{
+        address: keyPair.cashAddress,
+        amountSat: 10000
+      }]
+      const mdaChargeTxid = await bchWallet.send(receivers)
+      console.log(`Sent 10,000 sats to MDA address. TXID: ${mdaChargeTxid}`)
+
+      statusStr = 'Updating UTXOs'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
+
+      // Refresh the utxos in the wallet.
+      await bchWallet.bchjs.Util.sleep(2000)
+      await bchWallet.initialize()
+
+      statusStr = 'Creating Token'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText })
+
+      // Write mutable data to the MDA
+      const slpMutableData = new SlpMutableData({ wallet: bchWallet })
+      const cidStr = `ipfs://${cid1}`
+      console.log(`cidStr: ${cidStr}`)
+      const hex = await slpMutableData.data.writeCIDToOpReturn(cidStr, keyPair.wif)
+      const mdaWriteTxid = await bchWallet.ar.sendTx(hex)
+      console.log(`CID written to MDA. TXID: ${mdaWriteTxid}`)
+
+      // Collect token data that will be used to generate the token
+      const tokenData = {
+        name: this.state.tokenName,
+        ticker: this.state.tokenTicker,
+        documentUrl: cid3Str,
+        decimals: 0,
+        initialQty: 1,
+        mintBatonVout: null
+      }
+
+      // Generate the token
+      const genesisTxid = await slpMutableData.create.createToken(
+        wif,
+        tokenData,
+        keyPair.cashAddress
+      )
+      console.log(`New token created with TXID: ${genesisTxid}`)
+
+      statusStr = 'Token Created! Token ID:'
+      console.log(statusStr)
+      dialogText.push(statusStr)
+
+      statusStr = (<a href={`https://token.fullstack.cash/?tokenid=${genesisTxid}`} target='_blank' rel='noreferrer'>{genesisTxid}</a>)
+      console.log(statusStr)
+      dialogText.push(statusStr)
+      this.setState({ modalBody: dialogText, hideSpinner: true })
+
+      // Clear the form on successful token creation.
+      this.setState({
+        tokenName: '',
+        tokenTicker: '',
+        tokenUrl: '',
+        tokenIcon: '',
+        tokenMetadata: '',
+        fullSizedUrl: '',
+        xtraImmutable: '',
+        xtraMutable: '',
+
+        // Refresh token balance on closing of the modal
+        shouldRefreshTokens: true
+      })
+    } catch (err) {
+      console.log('Error trying to create NFT: ', err)
+      this.setState({
+        hideSpinner: true,
+        modalBody: ['Error creating NFT!', err.message]
+      })
     }
-    const appId = 'token-data-001'
-    const result3 = await write.postEntry(immutableData, appId)
-    const zcid3 = result3.hash
-    console.log('zcid3: ', zcid3)
+  }
 
-    // Refresh the utxos in the wallet.
-    await bchWallet.bchjs.Util.sleep(2000)
-    await bchWallet.initialize()
-    console.log('Updating UTXOs')
+  onCloseModal () {
+    const shouldRefreshTokens = this.state.shouldRefreshTokens
 
-    // Ask the P2WDB to upload the JSON content to IPFS.
-    const pin = new Pin({ bchWallet, serverURL })
-    const cid3 = await pin.json(zcid3)
-    const cid3Str = `ipfs://${cid3}`
-    console.log('documentUrl: ', cid3Str)
-
-    // Upload the MSP JSON to IPFS.
-    const mspData = {
-      tokenIcon: this.state.tokenIcon,
-      fullSizedUrl: this.state.fullSizedUrl,
-      about: 'This NFT was created using the PSF Token Studio at https://nft-creator.fullstack.cash',
-      userData: this.state.xtraMutable
+    if (shouldRefreshTokens) {
+      this.refreshTokens()
     }
-    // const appId = 'token-data-001'
-    const result1 = await write.postEntry(mspData, appId)
-    const zcid1 = result1.hash
-    console.log('zcid1: ', zcid1)
-
-    // Ask the P2WDB to upload the JSON content to IPFS.
-    // const pin = new Pin({ bchWallet, serverURL })
-    const cid1 = await pin.json(zcid1)
-    console.log('msp CID: ', cid1)
-
-    // Refresh the utxos in the wallet.
-    await bchWallet.bchjs.Util.sleep(2000)
-    await bchWallet.initialize()
-    console.log('Updating UTXOs')
-
-    // Pay the P2WDB to pin the CID.
-    const result2 = await pin.cid(cid1)
-    console.log('result2: ', result2)
-    const zcid2 = result2.hash
-    console.log('zcid2: ', zcid2)
-    // cid1 is the MSP IPFS CID that should be used.
-
-    // Generate a new address to use for the mutable data address (MDA).
-    const keyPair = await this.getKeyPair()
-    console.log(`keyPair: ${JSON.stringify(keyPair, null, 2)}`)
-
-    // Refresh the utxos in the wallet.
-    await bchWallet.bchjs.Util.sleep(2000)
-    await bchWallet.initialize()
-    console.log('Updating UTXOs')
-
-    // Send a few sats to the MDA to pay for updates.
-    const receivers = [{
-      address: keyPair.cashAddress,
-      amountSat: 10000
-    }]
-    const mdaChargeTxid = await bchWallet.send(receivers)
-    console.log(`Sent 10,000 sats to MDA address. TXID: ${mdaChargeTxid}`)
-
-    // Refresh the utxos in the wallet.
-    await bchWallet.bchjs.Util.sleep(2000)
-    await bchWallet.initialize()
-    console.log('Updating UTXOs')
-
-    // Write mutable data to the MDA
-    const slpMutableData = new SlpMutableData({ wallet: bchWallet })
-    const cidStr = `ipfs://${cid1}`
-    console.log(`cidStr: ${cidStr}`)
-    const hex = await slpMutableData.data.writeCIDToOpReturn(cidStr, keyPair.wif)
-    const mdaWriteTxid = await bchWallet.ar.sendTx(hex)
-    console.log(`CID written to MDA. TXID: ${mdaWriteTxid}`)
-
-    // Collect token data that will be used to generate the token
-    const tokenData = {
-      name: this.state.tokenName,
-      ticker: this.state.tokenTicker,
-      documentUrl: cid3Str,
-      decimals: 0,
-      initialQty: 1,
-      mintBatonVout: null
-    }
-
-    // Generate the token
-    const genesisTxid = await slpMutableData.create.createToken(
-      wif,
-      tokenData,
-      keyPair.cashAddress
-    )
-    console.log(`New token created with TXID: ${genesisTxid}`)
-
-    // Clear the form on successful token creation.
-    this.setState({
-      tokenName: '',
-      tokenTicker: '',
-      tokenUrl: '',
-      tokenIcon: '',
-      tokenMetadata: '',
-      fullSizedUrl: '',
-      xtraImmutable: '',
-      xtraMutable: ''
-    })
-
-    // Refresh the token balance.
-    this.refreshTokens()
   }
 
   // Cycles through HD wallet to find a key pair that does not have a

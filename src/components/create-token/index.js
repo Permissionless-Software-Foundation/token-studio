@@ -5,6 +5,7 @@
 // Global npm libraries
 import React from 'react'
 import { Container, Row, Col, Form, Button } from 'react-bootstrap'
+import Accordion from 'react-bootstrap/Accordion'
 import { Pin, Write } from 'p2wdb/index.js'
 import { SlpMutableData } from 'slp-mutable-data'
 
@@ -13,13 +14,18 @@ class CreateToken extends React.Component {
     super(props)
 
     this.state = {
+      appData: props.appData,
+
       // Form inputs
       tokenName: '',
       tokenTicker: '',
       tokenUrl: '',
       tokenIcon: '',
       tokenMetadata: '',
-      appData: props.appData
+      fullSizedUrl: '',
+      xtraImmutable: '',
+      xtraMutable: ''
+
     }
 
     // Bind the 'this' object to the event handlers.
@@ -89,43 +95,73 @@ class CreateToken extends React.Component {
             </Row>
             <br />
 
-            <Row>
-              <Col>
-                <b>Document URL (optional):</b>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <Form.Group>
-                  <Form.Control
-                    type='text'
-                    placeholder='https://PSFoundation.cash'
-                    onChange={e => this.setState({ tokenUrl: e.target.value })}
-                    value={this.state.tokenUrl}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <br />
+            <Accordion>
+              <Accordion.Item eventKey='0'>
+                <Accordion.Header>Advanced</Accordion.Header>
+                <Accordion.Body>
+                  <Container>
+                    <Row>
+                      <Col>
+                        <b>Full-Sized Image URL (optional):</b>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <Form.Group>
+                          <Form.Control
+                            type='text'
+                            placeholder='https://bafybeicvlcwv3flrwa4egmroyicvghevi6uzbd56drmoerjeguu4ikpnhe.ipfs.dweb.link/psf-logo.png'
+                            onChange={e => this.setState({ fullSizedUrl: e.target.value })}
+                            value={this.state.fullSizedUrl}
+                          />
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                    <br />
 
-            <Row>
-              <Col>
-                <b>Metadata (optional):</b>
-              </Col>
-            </Row>
-            <Row>
-              <Col>
-                <Form.Group>
-                  <Form.Control
-                    type='text'
-                    as='textarea'
-                    placeholder='https://PSFoundation.cash'
-                    onChange={e => this.setState({ tokenMetadata: e.target.value })}
-                    value={this.state.tokenMetadata}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
+                    <Row>
+                      <Col>
+                        <b>Extra Immutable Data (optional):</b>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <Form.Group>
+                          <Form.Control
+                            type='text'
+                            as='textarea'
+                            placeholder='https://PSFoundation.cash'
+                            onChange={e => this.setState({ xtraImmutable: e.target.value })}
+                            value={this.state.xtraImmutable}
+                          />
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                    <br />
+
+                    <Row>
+                      <Col>
+                        <b>Extra Mutable Data (optional):</b>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <Form.Group>
+                          <Form.Control
+                            type='text'
+                            as='textarea'
+                            placeholder='https://PSFoundation.cash'
+                            onChange={e => this.setState({ xtraMutable: e.target.value })}
+                            value={this.state.xtraMutable}
+                          />
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                    <br />
+                  </Container>
+                </Accordion.Body>
+              </Accordion.Item>
+            </Accordion>
             <br />
 
           </Form>
@@ -178,11 +214,14 @@ class CreateToken extends React.Component {
     const serverURL = 'http://localhost:5010'
     const write = new Write({ bchWallet, serverURL })
 
+    const now = new Date()
+
     // Upload immutable data to the P2WDB
     const immutableData = {
-      issuer: 'Permissionless Software Foundation',
-      website: 'http://psfoundation.cash',
-      dateCreated: '2022-09-10'
+      issuer: 'http://psfoundation.cash',
+      website: 'https://nft-creator.fullstack.cash',
+      dateCreated: now.toLocaleString(),
+      userData: this.state.xtraImmutable
     }
     const appId = 'token-data-001'
     const result3 = await write.postEntry(immutableData, appId)
@@ -202,8 +241,10 @@ class CreateToken extends React.Component {
 
     // Upload the MSP JSON to IPFS.
     const mspData = {
-      tokenIcon: 'https://bafybeicvlcwv3flrwa4egmroyicvghevi6uzbd56drmoerjeguu4ikpnhe.ipfs.dweb.link/psf-logo.png',
-      about: 'Demo token using this npm library: https://www.npmjs.com/package/slp-mutable-data'
+      tokenIcon: this.state.tokenIcon,
+      fullSizedUrl: this.state.fullSizedUrl,
+      about: 'This NFT was created using the PSF Token Studio at https://nft-creator.fullstack.cash',
+      userData: this.state.xtraMutable
     }
     // const appId = 'token-data-001'
     const result1 = await write.postEntry(mspData, appId)
@@ -274,6 +315,20 @@ class CreateToken extends React.Component {
       keyPair.cashAddress
     )
     console.log(`New token created with TXID: ${genesisTxid}`)
+
+    // Clear the form on successful token creation.
+    this.setState({
+      tokenName: '',
+      tokenTicker: '',
+      tokenUrl: '',
+      tokenIcon: '',
+      tokenMetadata: '',
+      fullSizedUrl: '',
+      xtraImmutable: '',
+      xtraMutable: ''
+    })
+
+    // ToDo: Refresh the token balance.
   }
 
   // Cycles through HD wallet to find a key pair that does not have a

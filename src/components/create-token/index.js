@@ -8,6 +8,8 @@ import { Container, Row, Col, Form, Button } from 'react-bootstrap'
 import Accordion from 'react-bootstrap/Accordion'
 import { Pin, Write } from 'p2wdb/index.js'
 import { SlpMutableData } from 'slp-mutable-data'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons'
 
 // Local libraries
 import RefreshTokenBalance from '../slp-tokens/refresh-tokens.js'
@@ -50,6 +52,14 @@ class CreateToken extends React.Component {
     return (
       <>
         <Container>
+
+          <Row>
+            <Col style={{ textAlign: 'right' }}>
+              <a href='https://youtu.be/r25a_BuKxXQ' target='_blank' rel='noreferrer'>
+                <FontAwesomeIcon icon={faCircleQuestion} size='lg' />
+              </a>
+            </Col>
+          </Row>
 
           <Form>
             <Row>

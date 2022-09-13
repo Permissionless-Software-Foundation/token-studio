@@ -4,7 +4,7 @@
 
 // Global npm libraries
 import React from 'react'
-import { Container, Row, Col, Form, Button } from 'react-bootstrap'
+import { Container, Row, Col, Form, Button, OverlayTrigger, Popover } from 'react-bootstrap'
 import Accordion from 'react-bootstrap/Accordion'
 import { Pin, Write } from 'p2wdb/index.js'
 import { SlpMutableData } from 'slp-mutable-data'
@@ -14,6 +14,8 @@ import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons'
 // Local libraries
 import RefreshTokenBalance from '../slp-tokens/refresh-tokens.js'
 import WaitingModal from '../waiting-modal'
+
+// let _this
 
 class CreateToken extends React.Component {
   constructor (props) {
@@ -31,6 +33,7 @@ class CreateToken extends React.Component {
       fullSizedUrl: '',
       xtraImmutable: '',
       xtraMutable: '',
+      nsfw: false,
 
       // Waiting Dialog Modal
       hideModal: true, // Should the modal be visible?
@@ -46,9 +49,29 @@ class CreateToken extends React.Component {
 
     // Create a reference to the Refresh button.
     this.refreshTokenButtonRef = React.createRef()
+
+    // _this = this
   }
 
+  // componentDidMount () {
+  //   setInterval(function () {
+  //     const nsfw = _this.state.nsfw
+  //     console.log('nsfw: ', nsfw)
+  //   }, 1000)
+  // }
+
   render () {
+    const nsfwPopover = (
+      <Popover id='popover-basic'>
+        <Popover.Header as='h3'>Not Safe For Work (NSFW)</Popover.Header>
+        <Popover.Body>
+          NSFW stands for 'Not Safe For Work'. If the image in your NFT contains
+          sex, violence, drugs, or other topics not typcially safe for a work
+          environment, please check the box.
+        </Popover.Body>
+      </Popover>
+    )
+
     return (
       <>
         <Container>
@@ -120,6 +143,23 @@ class CreateToken extends React.Component {
             <Row>
               <Col>
                 <i>Token icons should be 512 pixels wide.</i>
+              </Col>
+            </Row>
+            <br />
+
+            <Row>
+              <Col xs={3} lg={1}>
+                <Form.Check
+                  type='checkbox'
+                  label='NSFW'
+                  checked={this.state.nsfw}
+                  onChange={e => this.setState({ nsfw: e.target.checked })}
+                />
+              </Col>
+              <Col xs={2}>
+                <OverlayTrigger trigger='click' placement='top' overlay={nsfwPopover}>
+                  <FontAwesomeIcon icon={faCircleQuestion} size='lg' />
+                </OverlayTrigger>
               </Col>
             </Row>
             <br />
@@ -316,12 +356,13 @@ class CreateToken extends React.Component {
       dialogText.push(statusStr)
       this.setState({ modalBody: dialogText })
 
-      // Upload the MSP JSON to IPFS.
+      // Upload the Mutable data JSON for the MSP to IPFS.
       const mspData = {
         tokenIcon: this.state.tokenIcon,
         fullSizedUrl: this.state.fullSizedUrl,
         about: 'This NFT was created using the PSF Token Studio at https://nft-creator.fullstack.cash',
-        userData: this.state.xtraMutable
+        userData: this.state.xtraMutable,
+        nsfw: this.state.nsfw
       }
       // const appId = 'token-data-001'
       const result1 = await write.postEntry(mspData, appId)

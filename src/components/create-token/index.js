@@ -6,7 +6,7 @@
 import React from 'react'
 import { Container, Row, Col, Form, Button, OverlayTrigger, Popover } from 'react-bootstrap'
 import Accordion from 'react-bootstrap/Accordion'
-import { Pin, Write } from 'p2wdb/index.js'
+// import { Pin, Write } from 'p2wdb/index.js'
 import { SlpMutableData } from 'slp-mutable-data'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons'
@@ -301,103 +301,42 @@ class CreateToken extends React.Component {
       const bchWallet = this.state.appData.bchWallet
       await bchWallet.initialize()
 
-      statusStr = 'Uploading immutable data to the P2WDB'
+      // Instantiate the slp-mutable-data library
+      const slpMutableData = new SlpMutableData({ wallet: bchWallet })
+
+      statusStr = 'Uploading immutable data to the P2WDB and IPFS'
       console.log(statusStr)
       dialogText.push(statusStr)
       this.setState({ modalBody: dialogText })
 
-      // Prepare to write data to the P2WDB
-      const wif = bchWallet.walletInfo.privateKey
-      // const serverURL = 'http://localhost:5010'
-      const serverURL = 'https://p2wdb.fullstackcash.nl'
-      const write = new Write({ bchWallet, serverURL })
-
+      // Upload immutable data to the P2WDB and generate an IPFS CID
       const now = new Date()
-
-      // Upload immutable data to the P2WDB
       const immutableData = {
         issuer: 'http://psfoundation.cash',
         website: 'https://nft-creator.fullstack.cash',
         dateCreated: now.toLocaleString(),
         userData: this.state.xtraImmutable
       }
-      const appId = 'token-data-001'
-      const result3 = await write.postEntry(immutableData, appId)
-      const zcid3 = result3.hash
-      console.log('zcid3: ', zcid3)
+      let cidImmutable = await slpMutableData.data.createTokenData(immutableData)
+      cidImmutable = `ipfs://${cidImmutable}`
 
-      statusStr = 'Updating UTXOs'
-      console.log(statusStr)
-      dialogText.push(statusStr)
-      this.setState({ modalBody: dialogText })
-
-      // Refresh the utxos in the wallet.
-      // Also wait for P2WDB to process entry.
-      await bchWallet.bchjs.Util.sleep(6000)
-      await bchWallet.initialize()
-
-      statusStr = 'Pinning immutable data to IPFS'
-      console.log(statusStr)
-      dialogText.push(statusStr)
-      this.setState({ modalBody: dialogText })
-
-      // TODO: Do continual retry of Read() P2WDB until the zcid returns a value,
-      // to protect against race condition error of trying to write zcid JSON
-      // that has not yet been processed.
-
-      // Ask the P2WDB to upload the JSON content to IPFS.
-      const pin = new Pin({ bchWallet, serverURL })
-      const cid3 = await pin.json(zcid3)
-      const cid3Str = `ipfs://${cid3}`
-      console.log('documentUrl: ', cid3Str)
-
-      statusStr = 'Uploading mutable data to the P2WDB'
+      statusStr = 'Uploading mutable data to the P2WDB and IPFS'
       console.log(statusStr)
       dialogText.push(statusStr)
       this.setState({ modalBody: dialogText })
 
       // Upload the Mutable data JSON for the MSP to IPFS.
-      const mspData = {
+      const mutableData = {
         tokenIcon: this.state.tokenIcon,
         fullSizedUrl: this.state.fullSizedUrl,
         about: 'This NFT was created using the PSF Token Studio at https://nft-creator.fullstack.cash',
         userData: this.state.xtraMutable,
         nsfw: this.state.nsfw
       }
-      // const appId = 'token-data-001'
-      const result1 = await write.postEntry(mspData, appId)
-      const zcid1 = result1.hash
-      console.log('zcid1: ', zcid1)
+      let cidMutable = await slpMutableData.data.createTokenData(mutableData)
+      cidMutable = `ipfs://${cidMutable}`
 
-      statusStr = 'Updating UTXOs'
-      console.log(statusStr)
-      dialogText.push(statusStr)
-      this.setState({ modalBody: dialogText })
-
-      // Refresh the utxos in the wallet. Also wait for P2WDB to process entry.
-      await bchWallet.bchjs.Util.sleep(6000)
-      await bchWallet.initialize()
-
-      // TODO: Do continual retry of Read() P2WDB until the zcid returns a value,
-      // to protect against race condition error of trying to write zcid JSON
-      // that has not yet been processed.
-
-      // Ask the P2WDB to upload the JSON content to IPFS.
-      // const pin = new Pin({ bchWallet, serverURL })
-      const cid1 = await pin.json(zcid1)
-      console.log('msp CID: ', cid1)
-
-      statusStr = 'Pinning mutable data to IPFS'
-      console.log(statusStr)
-      dialogText.push(statusStr)
-      this.setState({ modalBody: dialogText })
-
-      // Pay the P2WDB to pin the CID.
-      const result2 = await pin.cid(cid1)
-      console.log('result2: ', result2)
-      const zcid2 = result2.hash
-      console.log('zcid2: ', zcid2)
-      // cid1 is the MSP IPFS CID that should be used.
+      const wif = bchWallet.walletInfo.privateKey
 
       // Generate a new address to use for the mutable data address (MDA).
       const keyPair = await this.getKeyPair()
@@ -420,10 +359,10 @@ class CreateToken extends React.Component {
       // Send a few sats to the MDA to pay for updates.
       const receivers = [{
         address: keyPair.cashAddress,
-        amountSat: 10000
+        amountSat: 6000
       }]
       const mdaChargeTxid = await bchWallet.send(receivers)
-      console.log(`Sent 10,000 sats to MDA address. TXID: ${mdaChargeTxid}`)
+      console.log(`Sent 6,000 sats to MDA address. TXID: ${mdaChargeTxid}`)
 
       statusStr = 'Updating UTXOs'
       console.log(statusStr)
@@ -440,10 +379,7 @@ class CreateToken extends React.Component {
       this.setState({ modalBody: dialogText })
 
       // Write mutable data to the MDA
-      const slpMutableData = new SlpMutableData({ wallet: bchWallet })
-      const cidStr = `ipfs://${cid1}`
-      console.log(`cidStr: ${cidStr}`)
-      const hex = await slpMutableData.data.writeCIDToOpReturn(cidStr, keyPair.wif)
+      const hex = await slpMutableData.data.writeCIDToOpReturn(cidMutable, keyPair.wif)
       const mdaWriteTxid = await bchWallet.ar.sendTx(hex)
       console.log(`CID written to MDA. TXID: ${mdaWriteTxid}`)
 
@@ -451,7 +387,7 @@ class CreateToken extends React.Component {
       const tokenData = {
         name: this.state.tokenName,
         ticker: this.state.tokenTicker,
-        documentUrl: cid3Str,
+        documentUrl: cidImmutable,
         decimals: 0,
         initialQty: 1,
         mintBatonVout: null

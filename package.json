@@ -62,5 +62,6 @@
         "npmPublish": false
       }
     ]
-  }
+  },
+  "homepage": "/token-studio/"
 }

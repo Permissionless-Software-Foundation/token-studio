@@ -75,6 +75,11 @@ class CreateToken extends React.Component {
     return (
       <>
         <Container>
+          <Row>
+            <Col>
+              <h2>Create an NFT</h2>
+            </Col>
+          </Row>
 
           <Row>
             <Col style={{ textAlign: 'right' }}>

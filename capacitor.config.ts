@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.bch-wallet.app',
-  appName: 'bch-wallet-web3',
+  appId: 'com.token_studio.app',
+  appName: 'Token Studio',
   webDir: 'build',
   bundledWebRuntime: false
 };

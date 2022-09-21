@@ -4,7 +4,7 @@ This is a simple React web app that lets people create NFTs on the Bitcoin Cash 
 You can play with a live version of this app:
 - [nft-creator.fullstack.cash](https://nft-creator.fullstack.cash/)
 
-Side load this as an Android app by downloading the APK file:
+Side-load this as an Android app by downloading the APK file:
 - [APK file](./apk/token-studio.apk)
 
 ## Installation

@@ -1,5 +1,11 @@
 # Token Studio
-This is a fork of [bch-wallet-web3-android](https://github.com/Permissionless-Software-Foundation/bch-wallet-web3-android). It's a web app for creating and managing SLP tokens on the Bitcoin Cash blockchain.
+This is a simple React web app that lets people create NFTs on the Bitcoin Cash (BCH) blockchain, using the SLP token protocol. Eventually it will be expanded to a 'token studio' which will help people create and manage fungible tokens and different types of NFTs.
+
+You can play with a live version of this app:
+- [nft-creator.fullstack.cash](https://nft-creator.fullstack.cash/)
+
+Side-load this as an Android app by downloading the APK file:
+- [APK file](./apk/token-studio.apk)
 
 ## Installation
 ```bash

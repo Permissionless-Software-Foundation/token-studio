@@ -535,7 +535,8 @@ class CreateToken extends React.Component {
   generateTags (tagStr) {
     if (!tagStr || typeof tagStr !== 'string') {
       console.log('tagStr: ', tagStr)
-      throw new Error('Input to generateTags must be a comma-separated string.')
+      // throw new Error('Input to generateTags must be a comma-separated string.')
+      return []
     }
 
     const lowerTagStr = tagStr.toLowerCase()

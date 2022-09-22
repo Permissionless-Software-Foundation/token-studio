@@ -408,8 +408,10 @@ class CreateToken extends React.Component {
         issuer: 'NFT Creator by the FullStack.cash',
         issuerUrl: 'https://nft-creator.fullstack.cash/'
       }
+      console.log(`Uploading this immutable data: ${JSON.stringify(immutableData, null, 2)}`)
       let cidImmutable = await slpMutableData.data.createTokenData(immutableData)
       cidImmutable = `ipfs://${cidImmutable}`
+      console.log(`Immutable data CID: ${cidImmutable}`)
 
       statusStr = 'Uploading mutable data to the P2WDB and IPFS'
       console.log(statusStr)
@@ -430,8 +432,10 @@ class CreateToken extends React.Component {
         category: this.state.category,
         tags
       }
+      console.log(`Uploading this mutable data: ${JSON.stringify(mutableData, null, 2)}`)
       let cidMutable = await slpMutableData.data.createTokenData(mutableData)
       cidMutable = `ipfs://${cidMutable}`
+      console.log(`Mutable data CID: ${cidMutable}`)
 
       const wif = bchWallet.walletInfo.privateKey
 

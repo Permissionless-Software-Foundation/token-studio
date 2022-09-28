@@ -40,7 +40,8 @@ class CreateToken extends React.Component {
       hideModal: true, // Should the modal be visible?
       modalBody: [], // Strings displayed in the modal
       hideSpinner: false, // Spinner gif in modal
-      shouldRefreshTokens: false // Should the token balance be updated when the modal is closed?
+      shouldRefreshTokens: false, // Should the token balance be updated when the modal is closed?
+      dialogFinished: true
     }
 
     // Bind the 'this' object to the event handlers.
@@ -357,7 +358,7 @@ class CreateToken extends React.Component {
         {
           this.state.hideModal
             ? null
-            : <WaitingModal heading='Creating NFT' body={this.state.modalBody} hideSpinner={this.state.hideSpinner} closeFunc={this.onCloseModal} />
+            : <WaitingModal heading='Creating NFT' body={this.state.modalBody} hideSpinner={this.state.hideSpinner} closeFunc={this.onCloseModal} denyClose={!this.state.dialogFinished} />
         }
 
       </>
@@ -375,7 +376,8 @@ class CreateToken extends React.Component {
       this.setState({
         hideModal: false,
         hideSpinner: false,
-        modalBody: dialogText
+        modalBody: dialogText,
+        dialogFinished: false
       })
 
       // Validate input
@@ -523,13 +525,17 @@ class CreateToken extends React.Component {
         xtraMutable: '',
 
         // Refresh token balance on closing of the modal
-        shouldRefreshTokens: true
+        shouldRefreshTokens: true,
+
+        // Allow user to dismiss the modal
+        dialogFinished: true
       })
     } catch (err) {
       console.log('Error trying to create NFT: ', err)
       this.setState({
         hideSpinner: true,
-        modalBody: ['Error creating NFT!', err.message]
+        modalBody: ['Error creating NFT!', err.message],
+        dialogFinished: true
       })
     }
   }

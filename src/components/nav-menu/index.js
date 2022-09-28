@@ -27,7 +27,7 @@ class NavMenu extends React.Component {
         <Navbar collapseOnSelect expand='xxxl' bg='dark' variant='dark' style={{ paddingRight: '20px' }}>
           <Navbar.Brand href='#home' style={{ paddingLeft: '20px' }}>
             <Image src={Logo} thumbnail width='50' />{' '}
-            BCH Web3 Wallet
+            Token Studio
           </Navbar.Brand>
 
           <Navbar.Toggle aria-controls='responsive-navbar-nav' />

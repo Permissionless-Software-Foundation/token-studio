@@ -36,6 +36,7 @@ class CreateToken extends React.Component {
       category: '',
       tagsStr: '',
       license: '',
+      mediaType: '',
 
       // Waiting Dialog Modal
       hideModal: true, // Should the modal be visible?
@@ -49,6 +50,7 @@ class CreateToken extends React.Component {
     this.handleCreateToken = this.handleCreateToken.bind(this)
     this.refreshTokens = this.refreshTokens.bind(this)
     this.onCloseModal = this.onCloseModal.bind(this)
+    this.handleMediaTypeChange = this.handleMediaTypeChange.bind(this)
 
     // Create a reference to the Refresh button.
     this.refreshTokenButtonRef = React.createRef()
@@ -101,6 +103,16 @@ class CreateToken extends React.Component {
         <Popover.Body>
           (optional) Separate each tag with a comma. This is used by some applications
           to link tokens with similar tags.
+        </Popover.Body>
+      </Popover>
+    )
+
+    const mediaTypePopover = (
+      <Popover id='popover-basic05'>
+        <Popover.Header as='h3'>Media Type</Popover.Header>
+        <Popover.Body>
+          (optional) indicate the type of media represented by the token. This
+          helps viewers properly display the content.
         </Popover.Body>
       </Popover>
     )
@@ -233,7 +245,7 @@ class CreateToken extends React.Component {
 
                     <Row>
                       <Col>
-                        <b>Category:</b>
+                        <b>Category (optional):</b>
                       </Col>
                       <Col xs={2}>
                         <OverlayTrigger trigger='click' placement='top' overlay={categoryPopover}>
@@ -257,7 +269,7 @@ class CreateToken extends React.Component {
 
                     <Row>
                       <Col>
-                        <b>Tags:</b>
+                        <b>Tags (optional):</b>
                       </Col>
                       <Col xs={2}>
                         <OverlayTrigger trigger='click' placement='top' overlay={tagPopover}>
@@ -275,6 +287,31 @@ class CreateToken extends React.Component {
                             value={this.state.tagsStr}
                           />
                         </Form.Group>
+                      </Col>
+                    </Row>
+                    <br />
+
+                    <Row>
+                      <Col>
+                        <b>Media Type (optional):</b>
+                      </Col>
+                      <Col xs={2}>
+                        <OverlayTrigger trigger='click' placement='top' overlay={mediaTypePopover}>
+                          <FontAwesomeIcon icon={faCircleQuestion} size='lg' />
+                        </OverlayTrigger>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <Form.Select aria-label='Default select example' onChange={this.handleMediaTypeChange} value={this.state.mediaType}>
+                          <option>Select media type</option>
+                          <option value='image'>image</option>
+                          <option value='audio'>audio</option>
+                          <option value='video'>video</option>
+                          <option value='3d'>3D Object</option>
+                          <option value='html'>HTML</option>
+                          <option value='text'>text</option>
+                        </Form.Select>
                       </Col>
                     </Row>
                     <br />
@@ -386,6 +423,14 @@ class CreateToken extends React.Component {
     )
   }
 
+  // event handler for the media type drop-down.
+  async handleMediaTypeChange (event) {
+    const value = event.target.value
+    // console.log('value: ', value)
+
+    this.setState({ mediaType: value })
+  }
+
   // This function is called when the user clicks the 'Create Token' button.
   async handleCreateToken (event) {
     try {
@@ -424,7 +469,7 @@ class CreateToken extends React.Component {
       // Upload immutable data to the P2WDB and generate an IPFS CID
       const now = new Date()
       const immutableData = {
-        schema: 'ps007-v1.0.0',
+        schema: 'ps007-v1.0.1',
         dateCreated: now.toISOString(),
         userData: this.state.xtraImmutable,
         jsonLd: {},
@@ -446,7 +491,7 @@ class CreateToken extends React.Component {
 
       // Upload the Mutable data JSON for the MSP to IPFS.
       const mutableData = {
-        schema: 'ps007-v1.0.0',
+        schema: 'ps007-v1.0.1',
         tokenIcon: this.state.tokenIcon,
         fullSizedUrl: this.state.fullSizedUrl,
         nsfw: this.state.nsfw,
@@ -454,7 +499,9 @@ class CreateToken extends React.Component {
         jsonLd: {},
         about: 'This NFT was created using the PSF Token Studio at https://nft-creator.fullstack.cash',
         category: this.state.category,
-        tags
+        tags,
+        mediaType: this.state.mediaType,
+        currentOwner: {}
       }
       console.log(`Uploading this mutable data: ${JSON.stringify(mutableData, null, 2)}`)
       let cidMutable = await slpMutableData.data.createTokenData(mutableData)

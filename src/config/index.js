@@ -4,10 +4,10 @@
 
 const config = {
   // Default IPFS CID for the app. This will be overwritten by dynamic lookup.
-  ipfsCid: 'bafybeigkdamwrzcmy5gpizxzlzsndy27tgsqnmq64jhai3zrl3x6v66ofa',
+  ipfsCid: 'bafybeiamm2lfhay5i562sgkvsjbwdhd7rcyumlrbgrdnzui6hqx2gvra3m',
 
   // BCH address used to point to the latest version of the IPFS CID.
-  appBchAddr: 'bitcoincash:qqq66ftjgncsxlrdwxvlykkhp3qusjq3zynx3q835y',
+  appBchAddr: 'bitcoincash:qq6xjkekhjqg27erjdvqlz04dyzgy2d4tscn5655yt',
 
   // Backup Info that goes into the Footer.
   ghPagesUrl: 'https://permissionless-software-foundation.github.io/token-studio/',

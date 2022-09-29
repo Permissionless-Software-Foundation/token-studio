@@ -8,7 +8,7 @@
 
   This function expects this environtment variable to contain a WIF private key
   with BCH to write to the blockchain:
-  - REACT_BOOTSTRAP_WEB3_SPA_WIF
+  - TOKEN_STUDIO_WIF
 */
 
 // Global npm libraries
@@ -19,10 +19,10 @@ const BchMessageLib = require('bch-message-lib/index')
 async function publishToBch (cid) {
   try {
     // Get the Filecoin token from the environment variable.
-    const wif = process.env.BCH_WALLET_WEB3_ANDROID
+    const wif = process.env.TOKEN_STUDIO_WIF
     if (!wif) {
       throw new Error(
-        'WIF private key not detected. Get a private key from https://wallet.fullstack.cash and save it to the BCH_WALLET_WEB3_ANDROID environment variable.'
+        'WIF private key not detected. Get a private key from https://wallet.fullstack.cash and save it to the TOKEN_STUDIO_WIF environment variable.'
       )
     }
 

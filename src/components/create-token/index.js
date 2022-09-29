@@ -35,6 +35,7 @@ class CreateToken extends React.Component {
       nsfw: false,
       category: '',
       tagsStr: '',
+      license: '',
 
       // Waiting Dialog Modal
       hideModal: true, // Should the modal be visible?
@@ -317,6 +318,26 @@ class CreateToken extends React.Component {
                       </Col>
                     </Row>
                     <br />
+
+                    <Row>
+                      <Col>
+                        <b>License (optional):</b>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <Form.Group>
+                          <Form.Control
+                            type='text'
+                            as='textarea'
+                            placeholder='https://bafybeidnkhjfsbihp4gquwqrs6y35jfpcriafymceszwvkundjkwk546pi.ipfs.dweb.link/copyright.txt'
+                            onChange={e => this.setState({ license: e.target.value })}
+                            value={this.state.license}
+                          />
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                    <br />
                   </Container>
                 </Accordion.Body>
               </Accordion.Item>
@@ -408,7 +429,8 @@ class CreateToken extends React.Component {
         userData: this.state.xtraImmutable,
         jsonLd: {},
         issuer: 'NFT Creator by the FullStack.cash',
-        issuerUrl: 'https://nft-creator.fullstack.cash/'
+        issuerUrl: 'https://nft-creator.fullstack.cash/',
+        license: this.state.license
       }
       console.log(`Uploading this immutable data: ${JSON.stringify(immutableData, null, 2)}`)
       let cidImmutable = await slpMutableData.data.createTokenData(immutableData)

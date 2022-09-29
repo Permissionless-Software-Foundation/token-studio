@@ -35,18 +35,22 @@ class CreateToken extends React.Component {
       nsfw: false,
       category: '',
       tagsStr: '',
+      license: '',
+      mediaType: '',
 
       // Waiting Dialog Modal
       hideModal: true, // Should the modal be visible?
       modalBody: [], // Strings displayed in the modal
       hideSpinner: false, // Spinner gif in modal
-      shouldRefreshTokens: false // Should the token balance be updated when the modal is closed?
+      shouldRefreshTokens: false, // Should the token balance be updated when the modal is closed?
+      dialogFinished: true
     }
 
     // Bind the 'this' object to the event handlers.
     this.handleCreateToken = this.handleCreateToken.bind(this)
     this.refreshTokens = this.refreshTokens.bind(this)
     this.onCloseModal = this.onCloseModal.bind(this)
+    this.handleMediaTypeChange = this.handleMediaTypeChange.bind(this)
 
     // Create a reference to the Refresh button.
     this.refreshTokenButtonRef = React.createRef()
@@ -99,6 +103,16 @@ class CreateToken extends React.Component {
         <Popover.Body>
           (optional) Separate each tag with a comma. This is used by some applications
           to link tokens with similar tags.
+        </Popover.Body>
+      </Popover>
+    )
+
+    const mediaTypePopover = (
+      <Popover id='popover-basic05'>
+        <Popover.Header as='h3'>Media Type</Popover.Header>
+        <Popover.Body>
+          (optional) indicate the type of media represented by the token. This
+          helps viewers properly display the content.
         </Popover.Body>
       </Popover>
     )
@@ -231,7 +245,7 @@ class CreateToken extends React.Component {
 
                     <Row>
                       <Col>
-                        <b>Category:</b>
+                        <b>Category (optional):</b>
                       </Col>
                       <Col xs={2}>
                         <OverlayTrigger trigger='click' placement='top' overlay={categoryPopover}>
@@ -255,7 +269,7 @@ class CreateToken extends React.Component {
 
                     <Row>
                       <Col>
-                        <b>Tags:</b>
+                        <b>Tags (optional):</b>
                       </Col>
                       <Col xs={2}>
                         <OverlayTrigger trigger='click' placement='top' overlay={tagPopover}>
@@ -273,6 +287,31 @@ class CreateToken extends React.Component {
                             value={this.state.tagsStr}
                           />
                         </Form.Group>
+                      </Col>
+                    </Row>
+                    <br />
+
+                    <Row>
+                      <Col>
+                        <b>Media Type (optional):</b>
+                      </Col>
+                      <Col xs={2}>
+                        <OverlayTrigger trigger='click' placement='top' overlay={mediaTypePopover}>
+                          <FontAwesomeIcon icon={faCircleQuestion} size='lg' />
+                        </OverlayTrigger>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <Form.Select aria-label='Default select example' onChange={this.handleMediaTypeChange} value={this.state.mediaType}>
+                          <option>Select media type</option>
+                          <option value='image'>image</option>
+                          <option value='audio'>audio</option>
+                          <option value='video'>video</option>
+                          <option value='3d'>3D Object</option>
+                          <option value='html'>HTML</option>
+                          <option value='text'>text</option>
+                        </Form.Select>
                       </Col>
                     </Row>
                     <br />
@@ -311,6 +350,26 @@ class CreateToken extends React.Component {
                             placeholder='https://PSFoundation.cash'
                             onChange={e => this.setState({ xtraMutable: e.target.value })}
                             value={this.state.xtraMutable}
+                          />
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                    <br />
+
+                    <Row>
+                      <Col>
+                        <b>License (optional):</b>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <Form.Group>
+                          <Form.Control
+                            type='text'
+                            as='textarea'
+                            placeholder='https://bafybeidnkhjfsbihp4gquwqrs6y35jfpcriafymceszwvkundjkwk546pi.ipfs.dweb.link/copyright.txt'
+                            onChange={e => this.setState({ license: e.target.value })}
+                            value={this.state.license}
                           />
                         </Form.Group>
                       </Col>
@@ -357,11 +416,19 @@ class CreateToken extends React.Component {
         {
           this.state.hideModal
             ? null
-            : <WaitingModal heading='Creating NFT' body={this.state.modalBody} hideSpinner={this.state.hideSpinner} closeFunc={this.onCloseModal} />
+            : <WaitingModal heading='Creating NFT' body={this.state.modalBody} hideSpinner={this.state.hideSpinner} closeFunc={this.onCloseModal} denyClose={!this.state.dialogFinished} />
         }
 
       </>
     )
+  }
+
+  // event handler for the media type drop-down.
+  async handleMediaTypeChange (event) {
+    const value = event.target.value
+    // console.log('value: ', value)
+
+    this.setState({ mediaType: value })
   }
 
   // This function is called when the user clicks the 'Create Token' button.
@@ -375,7 +442,8 @@ class CreateToken extends React.Component {
       this.setState({
         hideModal: false,
         hideSpinner: false,
-        modalBody: dialogText
+        modalBody: dialogText,
+        dialogFinished: false
       })
 
       // Validate input
@@ -401,12 +469,13 @@ class CreateToken extends React.Component {
       // Upload immutable data to the P2WDB and generate an IPFS CID
       const now = new Date()
       const immutableData = {
-        schema: 'ps007-v1.0.0',
+        schema: 'ps007-v1.0.1',
         dateCreated: now.toISOString(),
         userData: this.state.xtraImmutable,
         jsonLd: {},
         issuer: 'NFT Creator by the FullStack.cash',
-        issuerUrl: 'https://nft-creator.fullstack.cash/'
+        issuerUrl: 'https://nft-creator.fullstack.cash/',
+        license: this.state.license
       }
       console.log(`Uploading this immutable data: ${JSON.stringify(immutableData, null, 2)}`)
       let cidImmutable = await slpMutableData.data.createTokenData(immutableData)
@@ -422,7 +491,7 @@ class CreateToken extends React.Component {
 
       // Upload the Mutable data JSON for the MSP to IPFS.
       const mutableData = {
-        schema: 'ps007-v1.0.0',
+        schema: 'ps007-v1.0.1',
         tokenIcon: this.state.tokenIcon,
         fullSizedUrl: this.state.fullSizedUrl,
         nsfw: this.state.nsfw,
@@ -430,7 +499,9 @@ class CreateToken extends React.Component {
         jsonLd: {},
         about: 'This NFT was created using the PSF Token Studio at https://nft-creator.fullstack.cash',
         category: this.state.category,
-        tags
+        tags,
+        mediaType: this.state.mediaType,
+        currentOwner: {}
       }
       console.log(`Uploading this mutable data: ${JSON.stringify(mutableData, null, 2)}`)
       let cidMutable = await slpMutableData.data.createTokenData(mutableData)
@@ -523,13 +594,17 @@ class CreateToken extends React.Component {
         xtraMutable: '',
 
         // Refresh token balance on closing of the modal
-        shouldRefreshTokens: true
+        shouldRefreshTokens: true,
+
+        // Allow user to dismiss the modal
+        dialogFinished: true
       })
     } catch (err) {
       console.log('Error trying to create NFT: ', err)
       this.setState({
         hideSpinner: true,
-        modalBody: ['Error creating NFT!', err.message]
+        modalBody: ['Error creating NFT!', err.message],
+        dialogFinished: true
       })
     }
   }

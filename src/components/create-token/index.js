@@ -11,8 +11,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons'
 
 // Local libraries
-import RefreshTokenBalance from '../slp-tokens/refresh-tokens.js'
-import WaitingModal from '../waiting-modal'
+// import RefreshTokenBalance from '../slp-tokens/refresh-tokens.js'
+import WaitingModal from '../waiting-modal/index.js'
 
 // let _this
 
@@ -51,6 +51,8 @@ class CreateToken extends React.Component {
     this.refreshTokens = this.refreshTokens.bind(this)
     this.onCloseModal = this.onCloseModal.bind(this)
     this.handleMediaTypeChange = this.handleMediaTypeChange.bind(this)
+    this.getKeyPair = this.getKeyPair.bind(this)
+    this.validateInputs = this.validateInputs.bind(this)
 
     // Create a reference to the Refresh button.
     this.refreshTokenButtonRef = React.createRef()
@@ -411,7 +413,7 @@ class CreateToken extends React.Component {
           </Row>
         </Container>
 
-        <RefreshTokenBalance appData={this.state.appData} hideButton ref={this.refreshTokenButtonRef} />
+        {/* <RefreshTokenBalance appData={this.state.appData} hideButton ref={this.refreshTokenButtonRef} /> */}
 
         {
           this.state.hideModal
